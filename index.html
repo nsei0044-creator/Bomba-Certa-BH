@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bomba Certa BH – Avalie postos de combustível</title>
+<meta name="theme-color" content="#0F2238">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+<script>try{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>if(location.protocol==='file:')document.addEventListener('DOMContentLoaded',()=>document.body.insertAdjacentHTML('afterbegin','<p style="background:#D6402F;color:#fff;padding:12px;margin:0;position:relative;z-index:2000">Abra o site pelo Live Server (http://localhost). Abrir o arquivo direto no navegador não funciona.</p>'))</script>
+<script defer src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="topo">
+  <a class="logo" href="#home"><span class="logo-marca">⛽</span>Bomba Certa <small>BH</small></a>
+  <nav class="menu" aria-label="Principal">
+    <a href="#home" data-nav="home"><i data-lucide="home"></i><span>Início</span></a>
+    <a href="#chatbot" data-nav="chatbot"><i data-lucide="message-circle"></i><span>Assistente</span></a>
+  </nav>
+  <div class="acoes">
+    <span id="user-nome" class="user-nome" hidden></span>
+    <button id="btn-sair" class="theme-btn" aria-label="Sair da conta" hidden><i data-lucide="log-out"></i></button>
+    <button id="btn-login" class="theme-btn" aria-label="Fazer login"><i data-lucide="log-in"></i></button>
+    <button id="near-btn" class="theme-btn" aria-label="Postos perto de mim"><i data-lucide="map-pin"></i></button>
+    <button id="theme-toggle" class="theme-btn" aria-label="Alternar modo claro/escuro"><i data-lucide="moon"></i></button>
+  </div>
+</header>
+
+    <div id="banner-modo" class="banner-modo" hidden>
+      <span id="banner-text"></span>
+      <button id="toggle-modo" class="botao botao-banner" aria-pressed="false"></button>
+    </div>
+
+<main>
+  <section id="view-home" class="view">
+    <div class="intro">
+      <h1>Qual posto vale a parada hoje?</h1>
+      <p>Notas de motoristas de BH sobre atendimento, preço, agilidade e estrutura.</p>
+
+    </div>
+    <label class="busca"><span class="sr">Buscar posto ou bairro</span>
+      <input id="busca" type="search" placeholder="Buscar posto ou bairro" autocomplete="off">
+    </label>
+    <div id="vias" class="chips" role="group" aria-label="Filtrar por via"></div>
+    <div id="ranking" class="abas" role="tablist" aria-label="Rankings"></div>
+    <div class="home-grid">
+      <div id="lista" class="lista" aria-live="polite"></div>
+      <div id="map" class="mapa" aria-label="Mapa dos postos"></div>
+    </div>
+  </section>
+
+  <section id="view-posto" class="view" hidden></section>
+
+  <section id="view-chatbot" class="view" hidden>
+    <h1 class="titulo-tela">Assistente de postos</h1>
+    <div id="chat" class="chat" aria-live="polite"></div>
+    <div id="sugestoes" class="chips"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" placeholder="Pergunte sobre postos em BH" autocomplete="off" aria-label="Mensagem">
+      <button type="submit">Enviar</button>
+    </form>
+  </section>
+</main>
+
+<nav class="abas-baixo" aria-label="Navegação móvel">
+  <a href="#home" data-nav="home"><i data-lucide="home"></i><span>Início</span></a>
+  <a href="#chatbot" data-nav="chatbot"><i data-lucide="message-circle"></i><span>Assistente</span></a>
+</nav>
+<!-- Overlay de login (G1) -->
+<div id="overlay-login" class="overlay-login" role="dialog" aria-modal="true" aria-labelledby="login-titulo" hidden>
+  <div class="overlay-card">
+    <button class="overlay-fechar" id="login-fechar" aria-label="Fechar">&times;</button>
+    <h2 id="login-titulo">Entrar no Bomba Certa</h2>
+    <button class="botao botao-google" id="login-google" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09a7.12 7.12 0 0 1 0-4.17V7.07H2.18A11.99 11.99 0 0 0 0 12c0 1.94.46 3.77 1.28 5.4l3.56-2.84v-.47z" fill="#FBBC05"/><path d="M12 4.75c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.07l3.66 2.84c.87-2.6 3.3-4.16 6.16-4.16z" fill="#EA4335"/></svg>
+      Entrar com Google
+    </button>
+    <div class="overlay-separador"><span>ou</span></div>
+    <form id="login-form" autocomplete="on">
+      <label for="login-email">E-mail</label>
+      <input type="email" id="login-email" autocomplete="email" required>
+      <label for="login-senha">Senha</label>
+      <input type="password" id="login-senha" autocomplete="current-password" minlength="6" required>
+      <div id="login-erro" class="aviso erro" role="alert" hidden></div>
+      <button type="submit" class="botao" id="login-entrar">Entrar</button>
+    </form>
+    <p class="overlay-rodape" id="login-toggle-msg">
+      Não tem conta? <button type="button" class="link-btn" id="login-toggle">Criar conta</button>
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
